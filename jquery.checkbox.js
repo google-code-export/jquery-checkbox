@@ -5,83 +5,107 @@
  * Licensed under the MIT License:
  * http://www.opensource.org/licenses/mit-license.php
  *
- * @version 1.0.0
+ * @version 1.1.0 Beta
  * @author Khavilo Dmitry
  * @mailto wm.morgun@gmail.com
 **/
 
-jQuery.fn.checkbox = function(options) {
-	/* IE < 7.0 background flicker fix */
-	if ( jQuery.browser.msie && (parseFloat(jQuery.browser.version) < 7) )
-	{
-		document.execCommand('BackgroundImageCache', false, true);	
-	}
-	/* Default settings */
-	var settings = {
-		cls: 'jquery-checkbox',  /* checkbox  */
-		empty: 'empty.png'  /* checkbox  */
-	};
+(function($){
+
+	$.fn.checkbox = function(options) {
 	
-	/* Processing settings */
-	settings = jQuery.extend(settings, options || {});
-	
-	/* Wrapping all passed elements */
-	return this.each(function() 
-	{
-		/* Creating div for checkbox and assigning "hover" event */
-		var div = jQuery('<div class="' + settings.cls + '-box"><div class="' + settings.cls + '"><div class="mark"><img src="' + settings.empty + '" /></div></div></div>').hover(
-			function() { jQuery('.' + settings.cls, this).addClass(settings.cls + '-hover'); },
-			function() { jQuery('.' + settings.cls, this).removeClass(settings.cls + '-hover'); }
-		);
+		/* IE6 background flicker fix */
+		try	{ document.execCommand('BackgroundImageCache', false, true);	} catch (e) {}
 		
-		/* If custom style was applied - removing it */
-		if ( this._div && (oldDiv = jQuery(this._div)) )
+		/* Default settings */
+		var settings = {
+			cls: 'jquery-checkbox',  /* checkbox  */
+			empty: 'empty.png'  /* checkbox  */
+		};
+		
+		/* Processing settings */
+		settings = $.extend(settings, options || {});
+		
+		/* Adds check/uncheck & disable/enable events */
+		var addEvents = function(object)
 		{
-			clearInterval(this._int);
-			oldDiv.replaceWith(jQuery(this));
-		}		
-
-		/* Wrapping checkbox */
-		jQuery(this).after(div).css({display: 'none'}).appendTo(div);
+			var checked = object.checked;
+			var disabled = object.disabled;
+			var $object = $(object);
+			
+			if ( object.stateInterval )
+				clearInterval(object.stateInterval);
+			
+			object.stateInterval = setInterval(
+				function() 
+				{
+					if ( object.disabled != disabled )
+						$object.trigger( (disabled = !!object.disabled) ? 'disable' : 'enable');
+					if ( object.checked != checked )
+						$object.trigger( (checked = !!object.checked) ? 'check' : 'uncheck');
+				}, 
+				10 /* in miliseconds. Low numbers this can decrease performance on slow computers, high will increase responce time */
+			);
+			return $object;
+		}
 		
-		/* "disabled" & "checked" state changer hook */ 
-		this._div = div;
-		var el = this;
-		this._disabled = (this.disabled ? true : false);
-		this._checked = (this.checked ? true : false);
-		this._int = setInterval(function() {
-			if ( el._disabled != el.disabled ) {
-				el._disabled = (el.disabled ? true : false);
-				if ( el.disabled )
-					jQuery('.' + settings.cls, div).addClass(settings.cls + '-disabled');
-				else
-					jQuery('.' + settings.cls, div).removeClass(settings.cls + '-disabled');			
+		/* Wrapping all passed elements */
+		return this.each(function() 
+		{
+			var ch = this;
+			var $ch = addEvents(ch); /* Adds custom eents and returns */
+			
+			if (ch.wrapper)
+			{
+				ch.wrapper.remove();
 			}
-			if ( el._checked != el.checked ) {
-				el._checked = (el.checked ? true : false);
-				if ( el.checked )
-					div.addClass(settings.cls + '-checked');
-				else
-					div.removeClass(settings.cls + '-checked');
-			}
-		}, 10);
+			
+			/* Creating div for checkbox and assigning "hover" event */
+			ch.wrapper = $('<span class="' + settings.cls + '"><span class="mark"><img src="' + settings.empty + '" /></span></span>');
+			ch.wrapperInner = ch.wrapper.children('span');
+			ch.wrapper.hover(
+				function() { ch.wrapperInner.addClass(settings.cls + '-hover'); },
+				function() { ch.wrapperInner.removeClass(settings.cls + '-hover'); }
+			);
 
-		/* Creating "click" event handler for checkbox wrapper*/
-		jQuery(div).click(function(){
-			jQuery('input', this).click();
+			/* Wrapping checkbox */
+			$ch.css({position: 'absolute', zIndex: -1}).after(ch.wrapper);
+			
+			/* Fixing IE6 label behaviour */
+			var parents = $ch.parents('label');
+			/* Creating "click" event handler for checkbox wrapper*/
+			if ( parents.length )
+			{
+				parents.click(function() { $ch.trigger('click'); return ( $.browser.msie && $.browser.version < 7 ); });
+			}
+			else
+			{
+				ch.wrapper.click(function() { $ch.trigger('click'); });
+			}
+			
+			delete parents;
+				
+			$ch.bind('disable', function() { ch.wrapperInner.addClass(settings.cls+'-disabled');}).bind('enable', function() { ch.wrapperInner.removeClass(settings.cls+'-disabled');});
+			$ch.bind('check', function() { ch.wrapper.addClass(settings.cls+'-checked' );}).bind('uncheck', function() { ch.wrapper.removeClass(settings.cls+'-checked' );});
+			
+			/* Disable image drag-n-drop  */
+			$('img', ch.wrapper).bind('dragstart', function () {return false;}).bind('mousedown', function () {return false;});
+			
+			/* Firefox div antiselection hack */
+			if ( window.getSelection )
+				ch.wrapper.css('MozUserSelect', 'none');
+			
+			/* Applying checkbox state */
+			if ($ch.is(':rasio'))
+			{
+				alert('s');
+			}
+			if ( ch.checked )
+				ch.wrapper.addClass(settings.cls + '-checked');
+			if ( ch.disabled )
+				ch.wrapperInner.addClass(settings.cls + '-disabled');
 		});
-		
-		/* Disable image drag-n-drop  */
-		jQuery('img', div).bind('dragstart', function () {return false;}).bind('mousedown', function () {return false;});
-		
-		/* Firefox div antiselection hack */
-		if ( window.getSelection )
-			jQuery(div).css('MozUserSelect', 'none');
-		
-		/* Applying checkbox state */
-		if (this.checked)
-			div.addClass(settings.cls + '-checked');
-		if (this.disabled)
-			jQuery('.' + settings.cls, div).addClass(settings.cls + '-disabled');
-	});
-};
+	};
+
+
+})(jQuery);

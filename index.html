@@ -71,8 +71,8 @@ a.code{display: block;float:left;clear:both;padding: 2px 0px;}
 		
 		<div id="form1">
 		<h3>Default skin</h3>
-		<p><input name="checkbox.1.1" type="checkbox" onclick="jQuery('#check').attr('disabled', !this.checked ? false : true)"> Unchecked checkbox (by clicking on this checkbox you can disable/enable the checkbox below)</p>
-		<p><input name="checkbox.1.2" type="checkbox" id="check" checked> Checked  checkbox (this one)</p>
+		<p><label><input name="checkbox.1.1" type="checkbox" onclick="var j = jQuery('#check').attr('disabled', jQuery('#check').attr('disabled') ? false : true)"> Unchecked checkbox (by clicking on this checkbox you can disable/enable the checkbox below)</label></p>
+		<p><input name="checkbox.1.2" type="checkbox" id="check" checked> <label for="check">Checked  checkbox (this one)</label></p>
 	
 		<p><input name="checkbox.1.3" type="checkbox" disabled> Disabled & unchecked checkbox</p>
 		<p><input name="checkbox.1.4" type="checkbox" disabled checked> Disabled & checked checkbox</p>
