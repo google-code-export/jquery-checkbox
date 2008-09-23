@@ -1,5 +1,4 @@
-.jquery-checkbox-box   {display: inline; font-size: 20px; line-height: 20px; cursor: pointer; cursor: hand;}
-.jquery-checkbox       {display: inline;}
+.jquery-checkbox       {display: inline; font-size: 20px; line-height: 20px; cursor: pointer; cursor: hand;}
 .jquery-checkbox .mark {display: inline;}
 
 .jquery-checkbox img {vertical-align: middle; width: 60px; height: 20px;}
@@ -11,7 +10,7 @@
 .jquery-checkbox-hover img{
 	background-position: 0px -20px;
 }
-.jquery-checkbox-checked .jquery-checkbox img{
+.jquery-checkbox-checked img{
 	background-position: 0px -40px;
 }
 .jquery-checkbox-checked .jquery-checkbox-hover img {
