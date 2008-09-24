@@ -48,7 +48,7 @@
 			);
 			return $object;
 		}
-		
+		try { console.log(this); } catch(e) {}
 		/* Wrapping all passed elements */
 		return this.each(function() 
 		{
@@ -76,11 +76,11 @@
 			/* Creating "click" event handler for checkbox wrapper*/
 			if ( parents.length )
 			{
-				parents.click(function() { $ch.trigger('click'); return ( $.browser.msie && $.browser.version < 7 ); });
+				parents.click(function(e) { $ch.trigger('click', [e]); return ( $.browser.msie && $.browser.version < 7 ); });
 			}
 			else
 			{
-				ch.wrapper.click(function() { $ch.trigger('click'); });
+				ch.wrapper.click(function(e) { $ch.trigger('click', [e]); });
 			}
 			
 			delete parents;
@@ -96,10 +96,6 @@
 				ch.wrapper.css('MozUserSelect', 'none');
 			
 			/* Applying checkbox state */
-			if ($ch.is(':rasio'))
-			{
-				alert('s');
-			}
 			if ( ch.checked )
 				ch.wrapper.addClass(settings.cls + '-checked');
 			if ( ch.disabled )
