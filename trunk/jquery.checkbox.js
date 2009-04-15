@@ -5,15 +5,21 @@
  * Licensed under the MIT License:
  * http://www.opensource.org/licenses/mit-license.php
  *
- * @version 1.1.0 Beta
+ * @version 1.3.0 Beta 1
  * @author Khavilo Dmitry
  * @mailto wm.morgun@gmail.com
 **/
 
 (function($){
-
-	$.fn.checkbox = function(options) {
+	/* Little trick to remove event bubbling that causes events recursion */
+	var CB = function(e)
+	{
+		if (!e) var e = window.event;
+		e.cancelBubble = true;
+		if (e.stopPropagation) e.stopPropagation();
+	};
 	
+	$.fn.checkbox = function(options) {
 		/* IE6 background flicker fix */
 		try	{ document.execCommand('BackgroundImageCache', false, true);	} catch (e) {}
 		
@@ -47,51 +53,60 @@
 				10 /* in miliseconds. Low numbers this can decrease performance on slow computers, high will increase responce time */
 			);
 			return $object;
-		}
-		try { console.log(this); } catch(e) {}
+		};
+		//try { console.log(this); } catch(e) {}
+		
 		/* Wrapping all passed elements */
 		return this.each(function() 
 		{
-			var ch = this;
-			var $ch = addEvents(ch); /* Adds custom eents and returns */
+			var ch = this; /* Reference to DOM Element*/
+			var $ch = addEvents(ch); /* Adds custom events and returns, jQuery enclosed object */
 			
-			if (ch.wrapper)
-			{
-				ch.wrapper.remove();
-			}
+			/* Removing wrapper if already applied  */
+			if (ch.wrapper) ch.wrapper.remove();
 			
-			/* Creating div for checkbox and assigning "hover" event */
+			/* Creating wrapper for checkbox and assigning "hover" event */
 			ch.wrapper = $('<span class="' + settings.cls + '"><span class="mark"><img src="' + settings.empty + '" /></span></span>');
-			ch.wrapperInner = ch.wrapper.children('span');
+			ch.wrapperInner = ch.wrapper.children('span:eq(0)');
 			ch.wrapper.hover(
-				function() { ch.wrapperInner.addClass(settings.cls + '-hover'); },
-				function() { ch.wrapperInner.removeClass(settings.cls + '-hover'); }
+				function(e) { ch.wrapperInner.addClass(settings.cls + '-hover');CB(e); },
+				function(e) { ch.wrapperInner.removeClass(settings.cls + '-hover');CB(e); }
 			);
-
+			
 			/* Wrapping checkbox */
-			$ch.css({position: 'absolute', zIndex: -1}).after(ch.wrapper);
+			$ch.css({position: 'absolute', zIndex: -1, visibility: 'hidden'}).after(ch.wrapper);
 			
-			/* Fixing IE6 label behaviour */
-			var parents = $ch.parents('label');
-			/* Creating "click" event handler for checkbox wrapper*/
-			if ( parents.length )
+			/* Ttying to find "our" label */
+			var label = false;
+			if ($ch.attr('id'))
 			{
-				parents.click(function(e) { $ch.trigger('click', [e]); return ( $.browser.msie && $.browser.version < 7 ); });
+				label = $('label[for='+$ch.attr('id')+']');
+				if (!label.length) label = false;
 			}
-			else
+			if (!label)
 			{
-				ch.wrapper.click(function(e) { $ch.trigger('click', [e]); });
+				/* Trying to utilize "closest()" from jQuery 1.3+ */
+				label = $ch.closest ? $ch.closest('label') : $ch.parents('label:eq(0)');
+				if (!label.length) label = false;
 			}
-			
-			delete parents;
-				
+			/* Labe found, applying event hanlers */
+			if (label)
+			{
+				label.hover(
+					function(e) { ch.wrapper.trigger('mouseover', [e]); },
+					function(e) { ch.wrapper.trigger('mouseout', [e]); }
+				);
+				label.click(function(e) { $ch.trigger('click',[e]); CB(e); return false;});
+			}
+			ch.wrapper.click(function(e) { $ch.trigger('click',[e]); CB(e); return false;});
+			$ch.click(function(e) { CB(e); });
 			$ch.bind('disable', function() { ch.wrapperInner.addClass(settings.cls+'-disabled');}).bind('enable', function() { ch.wrapperInner.removeClass(settings.cls+'-disabled');});
 			$ch.bind('check', function() { ch.wrapper.addClass(settings.cls+'-checked' );}).bind('uncheck', function() { ch.wrapper.removeClass(settings.cls+'-checked' );});
 			
-			/* Disable image drag-n-drop  */
+			/* Disable image drag-n-drop for IE */
 			$('img', ch.wrapper).bind('dragstart', function () {return false;}).bind('mousedown', function () {return false;});
 			
-			/* Firefox div antiselection hack */
+			/* Firefox antiselection hack */
 			if ( window.getSelection )
 				ch.wrapper.css('MozUserSelect', 'none');
 			
@@ -99,9 +114,7 @@
 			if ( ch.checked )
 				ch.wrapper.addClass(settings.cls + '-checked');
 			if ( ch.disabled )
-				ch.wrapperInner.addClass(settings.cls + '-disabled');
+				ch.wrapperInner.addClass(settings.cls + '-disabled');			
 		});
-	};
-
-
+	}
 })(jQuery);
